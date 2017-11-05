@@ -37,6 +37,7 @@ public class XMLParser {
     String myAnimeListUserURL = URLLeft + user + URLRight;
     File xmlFile = new File("animelist", "tmp");
     URL url = new URL(myAnimeListUserURL);
+    // sleep is necessary because the MAL API complains at too many requests
     try {
       TimeUnit.MILLISECONDS.sleep(500);
     } catch (InterruptedException e) {
