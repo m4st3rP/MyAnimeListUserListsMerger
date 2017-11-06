@@ -154,16 +154,21 @@ public class XMLParser {
   void writeCSV(HashMap<String, Row> map) {
     System.out.println("Writing File");
     String result = "Name^Score^Count^Score Count^Weighted Score^Link" + "\n";
-    double weightedScore = 0.0;
+    double weightedScore;
+    double scoreCountNormalization;
+    double factor = 0.9;
+    double amplification = 12.0;
+    double factorizedScore;
     String link;
     for (Map.Entry<String, Row> entry : map.entrySet()) {
       link = "https://myanimelist.net/anime/" + entry.getKey();
-      weightedScore = (entry.getValue().score * 0.9)
-          + ((entry.getValue().scoreCount / maxScoreCount) * 0.1) * 12;
+      scoreCountNormalization = (double) entry.getValue().scoreCount / maxScoreCount;
+      factorizedScore = (double) entry.getValue().score * factor;
+      weightedScore = factorizedScore + scoreCountNormalization * (1.0 - factor) * amplification;
       result = result + entry.getValue() + "^" + weightedScore + "^" + link + "\n";
     }
     try {
-      FileUtils.writeStringToFile(new File("MergedLists.txt"), result, "UTF8");
+      FileUtils.writeStringToFile(new File("MergedLists.txt"), result, "UTF-8");
       System.out.println("Finished!");
     } catch (Exception e) {
       throw new RuntimeException(e);
