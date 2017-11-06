@@ -21,6 +21,9 @@ import org.xml.sax.SAXException;
 
 public class XMLParser {
 
+  int maxScoreCount = 1;
+  int userCounter = 0;
+
   public static void main(String[] args) {
     XMLParser myInstance = new XMLParser();
     try {
@@ -43,21 +46,19 @@ public class XMLParser {
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    System.out.println("Downloading: " + user);
+    userCounter++;
+    System.out.println("Processing User #" + userCounter + ": " + user);
     FileUtils.copyURLToFile(url, xmlFile);
 
     // Create the hashmap for this user
-    System.out.println("Creating Hash Map for user.");
     HashMap<String, Row> animeMap = new HashMap<>();
 
     // Parse the xml
-    System.out.println("Parsing XML");
     DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
     DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
     Document doc = dBuilder.parse(xmlFile);
     doc.getDocumentElement().normalize();
     NodeList nList = doc.getElementsByTagName("anime");
-    System.out.println("----------------------------");
 
     // go through the parsed list and add it to the users list
     for (int i = 0; i < nList.getLength(); i++) {
@@ -107,6 +108,8 @@ public class XMLParser {
     HashMap<String, Row> combindedMap =
         listOfMaps.stream().reduce(new HashMap<>(), this::mergeMaps);
 
+    reader.close();
+
     try {
       writeCSV(combindedMap);
     } catch (Exception e) {
@@ -130,6 +133,9 @@ public class XMLParser {
                 ((newMap.get(entry.getKey()).score * newMap.get(entry.getKey()).scoreCount)
                     + entry.getValue().score) / (newMap.get(entry.getKey()).scoreCount + 1);
             newMap.get(entry.getKey()).scoreCount += 1;
+            if (newMap.get(entry.getKey()).scoreCount > maxScoreCount) {
+              maxScoreCount = newMap.get(entry.getKey()).scoreCount;
+            }
           } else {
             newMap.get(entry.getKey()).score = entry.getValue().score;
             newMap.get(entry.getKey()).scoreCount = 1;
@@ -145,15 +151,20 @@ public class XMLParser {
     return newMap;
   }
 
-  static void writeCSV(HashMap<String, Row> map) {
-    System.out.println("Writing CSV");
+  void writeCSV(HashMap<String, Row> map) {
+    System.out.println("Writing File");
     String result = "Name^Score^Count^Score Count^Weighted Score^Link" + "\n";
+    double weightedScore = 0.0;
+    String link;
     for (Map.Entry<String, Row> entry : map.entrySet()) {
-      result = result + entry.getValue() + 0 + entry.getKey() + "\n";
+      link = "https://myanimelist.net/anime/" + entry.getKey();
+      weightedScore = (entry.getValue().score * 0.9)
+          + ((entry.getValue().scoreCount / maxScoreCount) * 0.1) * 12;
+      result = result + entry.getValue() + "^" + weightedScore + "^" + link + "\n";
     }
     try {
-      FileUtils.writeStringToFile(new File("MergedLists.txt"), result);
-      System.out.println("Done!");
+      FileUtils.writeStringToFile(new File("MergedLists.txt"), result, "UTF8");
+      System.out.println("Finished!");
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
