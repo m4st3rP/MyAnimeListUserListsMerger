@@ -157,14 +157,13 @@ public class XMLParser {
     double weightedScore;
     double scoreCountNormalization;
     double factor = 0.9;
-    double amplification = 12.0;
     double factorizedScore;
     String link;
     for (Map.Entry<String, Row> entry : map.entrySet()) {
       link = "https://myanimelist.net/anime/" + entry.getKey();
       scoreCountNormalization = (double) entry.getValue().scoreCount / maxScoreCount;
       factorizedScore = (double) entry.getValue().score * factor;
-      weightedScore = factorizedScore + scoreCountNormalization * (1.0 - factor) * amplification;
+      weightedScore = factorizedScore + scoreCountNormalization * (1.0 - factor) * 10.0;
       result = result + entry.getValue() + "^" + weightedScore + "^" + link + "\n";
     }
     try {
