@@ -33,13 +33,13 @@ public class XMLParser {
     }
   }
 
-  private HashMap<String, Row> getAndParseXmlForUser(String user)
-      throws IOException, ParserConfigurationException, SAXException {
-    String URLLeft = "https://myanimelist.net/malappinfo.php?u=";
-    String URLRight = "&status=all&type=anime";
+  private HashMap<String, Row> getAndParseXmlForUser(String user) throws IOException, ParserConfigurationException, SAXException {
+    final String URLLeft = "https://myanimelist.net/malappinfo.php?u=";
+    final String URLRight = "&status=all&type=anime";
     String myAnimeListUserURL = URLLeft + user + URLRight;
     File xmlFile = new File("animelist", "tmp");
     URL url = new URL(myAnimeListUserURL);
+
     // sleep is necessary because the MAL API complains at too many requests
     try {
       TimeUnit.MILLISECONDS.sleep(500);
@@ -69,19 +69,16 @@ public class XMLParser {
       if (nNode.getNodeType() == Node.ELEMENT_NODE) {
         Element elem = (Element) nNode;
         // only add anime if it is not PTW
-        if (Integer
-            .parseInt(elem.getElementsByTagName("my_status").item(0).getTextContent()) != 6) {
+        if (Integer.parseInt(elem.getElementsByTagName("my_status").item(0).getTextContent()) != 6) {
           Row row = new Row();
           row.name = elem.getElementsByTagName("series_title").item(0).getTextContent();
           row.count = 1;
           // only add score and scorecount if score is not 0
-          if (Integer
-              .parseInt(elem.getElementsByTagName("my_score").item(0).getTextContent()) == 0) {
+          if (Integer.parseInt(elem.getElementsByTagName("my_score").item(0).getTextContent()) == 0) {
             row.scoreCount = 0;
             row.score = 0;
           } else {
-            row.score =
-                Double.parseDouble(elem.getElementsByTagName("my_score").item(0).getTextContent());
+            row.score = Double.parseDouble(elem.getElementsByTagName("my_score").item(0).getTextContent());
             row.scoreCount = 1;
           }
 
@@ -105,8 +102,7 @@ public class XMLParser {
       listOfMaps.add(aMap);
     }
 
-    HashMap<String, Row> combindedMap =
-        listOfMaps.stream().reduce(new HashMap<>(), this::mergeMaps);
+    HashMap<String, Row> combindedMap = listOfMaps.stream().reduce(new HashMap<>(), this::mergeMaps);
 
     reader.close();
 
@@ -122,16 +118,14 @@ public class XMLParser {
     newMap.putAll(mapA);
 
     for (Map.Entry<String, Row> entry : mapB.entrySet()) {
-      if (newMap.containsKey(entry.getKey())) { // If the key is already in the map, we have a
-                                                // duplicate!
+      if (newMap.containsKey(entry.getKey())) { // If the key is already in the map, we have a duplicate!
+
         // We need to update the existing entry
 
-        // Only if the new score is not 0
+        // Only proceed if the user gave a rating
         if (entry.getValue().score != 0) {
           if (newMap.get(entry.getKey()).score > 0) {
-            newMap.get(entry.getKey()).score =
-                ((newMap.get(entry.getKey()).score * newMap.get(entry.getKey()).scoreCount)
-                    + entry.getValue().score) / (newMap.get(entry.getKey()).scoreCount + 1);
+            newMap.get(entry.getKey()).score = ((newMap.get(entry.getKey()).score * newMap.get(entry.getKey()).scoreCount) + entry.getValue().score) / (newMap.get(entry.getKey()).scoreCount + 1);
             newMap.get(entry.getKey()).scoreCount += 1;
             if (newMap.get(entry.getKey()).scoreCount > maxScoreCount) {
               maxScoreCount = newMap.get(entry.getKey()).scoreCount;
@@ -143,7 +137,6 @@ public class XMLParser {
         }
         newMap.get(entry.getKey()).count += 1;
         // this should be it
-
       } else { // Key of map 2 is not in the new map, just add the non duplicate
         newMap.put(entry.getKey(), entry.getValue());
       }
@@ -152,20 +145,23 @@ public class XMLParser {
   }
 
   void writeCSV(HashMap<String, Row> map) {
-    System.out.println("Writing File");
-    String result = "Name^Score^Count^Score Count^Weighted Score^Link" + "\n";
     double weightedScore;
     double scoreCountNormalization;
-    double factor = 0.9;
+    final double FACTOR = 0.9;
     double factorizedScore;
     String link;
+
+    System.out.println("Writing File");
+    String result = "Name^Score^Count^Score Count^Weighted Score^Link" + "\n";
+
     for (Map.Entry<String, Row> entry : map.entrySet()) {
       link = "https://myanimelist.net/anime/" + entry.getKey();
       scoreCountNormalization = (double) entry.getValue().scoreCount / maxScoreCount;
-      factorizedScore = (double) entry.getValue().score * factor;
-      weightedScore = factorizedScore + scoreCountNormalization * (1.0 - factor) * 10.0;
+      factorizedScore = (double) entry.getValue().score * FACTOR;
+      weightedScore = factorizedScore + scoreCountNormalization * (1.0 - FACTOR) * 10.0;
       result = result + entry.getValue() + "^" + weightedScore + "^" + link + "\n";
     }
+
     try {
       FileUtils.writeStringToFile(new File("MergedLists.txt"), result, "UTF-8");
       System.out.println("Finished!");
