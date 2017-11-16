@@ -21,7 +21,7 @@ import org.xml.sax.SAXException;
 
 public class XMLParser {
 
-  private int maxScoreCount = 1;
+  private int maxCount = 1;
   private int userCounter = 0;
 
   public static void main(String[] args) {
@@ -129,15 +129,15 @@ public class XMLParser {
           if (newMap.get(entry.getKey()).score > 0) {
             newMap.get(entry.getKey()).score = ((newMap.get(entry.getKey()).score * newMap.get(entry.getKey()).scoreCount) + entry.getValue().score) / (newMap.get(entry.getKey()).scoreCount + 1);
             newMap.get(entry.getKey()).scoreCount += 1;
-            if (newMap.get(entry.getKey()).scoreCount > maxScoreCount) {
-              maxScoreCount = newMap.get(entry.getKey()).scoreCount;
-            }
           } else {
             newMap.get(entry.getKey()).score = entry.getValue().score;
             newMap.get(entry.getKey()).scoreCount = 1;
           }
         }
         newMap.get(entry.getKey()).count += 1;
+        if (newMap.get(entry.getKey()).count > maxCount) {
+          maxCount = newMap.get(entry.getKey()).count;
+        }
         // this should be it
       } else { // Key of map 2 is not in the new map, just add the non duplicate
         newMap.put(entry.getKey(), entry.getValue());
@@ -159,7 +159,7 @@ public class XMLParser {
     for (Map.Entry<String, Row> entry : map.entrySet()) {
       link = "https://myanimelist.net/anime/" + entry.getKey();
       factorizedScore = (double) entry.getValue().score * FACTOR;
-      scoreCountNormalization = (double) entry.getValue().scoreCount / maxScoreCount;     
+      scoreCountNormalization = (double) entry.getValue().count / maxCount;     
       weightedScore = factorizedScore + scoreCountNormalization * (1.0 - FACTOR) * 10.0;
       result = result + entry.getValue() + "^" + weightedScore + "^" + link + "\n";
     }
