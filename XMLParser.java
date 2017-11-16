@@ -21,14 +21,35 @@ import org.xml.sax.SAXException;
 
 public class XMLParser {
 
-  int maxScoreCount = 1;
-  int userCounter = 0;
+  private int maxScoreCount = 1;
+  private int userCounter = 0;
 
   public static void main(String[] args) {
     XMLParser myInstance = new XMLParser();
     try {
       myInstance.parseXML();
     } catch (IOException | SAXException | ParserConfigurationException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void parseXML() throws IOException, ParserConfigurationException, SAXException {
+    BufferedReader reader = new BufferedReader(new FileReader("malusers.txt"));
+    String readLine;
+  
+    ArrayList<HashMap<String, Row>> listOfMaps = new ArrayList<>();
+    while ((readLine = reader.readLine()) != null) {
+      HashMap<String, Row> aMap = getAndParseXmlForUser(readLine);
+      listOfMaps.add(aMap);
+    }
+  
+    HashMap<String, Row> combindedMap = listOfMaps.stream().reduce(new HashMap<>(), this::mergeMaps);
+  
+    reader.close();
+  
+    try {
+      writeCSV(combindedMap);
+    } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
@@ -41,10 +62,13 @@ public class XMLParser {
     URL url = new URL(myAnimeListUserURL);
 
     // sleep is necessary because the MAL API complains at too many requests
-    try {
-      TimeUnit.MILLISECONDS.sleep(500);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
+    // skip for first user
+    if (userCounter != 0) {
+      try {
+        TimeUnit.MILLISECONDS.sleep(500);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
     }
     userCounter++;
     System.out.println("Processing User #" + userCounter + ": " + user);
@@ -91,28 +115,6 @@ public class XMLParser {
     return animeMap;
   }
 
-  private void parseXML() throws IOException, ParserConfigurationException, SAXException {
-
-    BufferedReader reader = new BufferedReader(new FileReader("malusers.txt"));
-    String readLine;
-
-    ArrayList<HashMap<String, Row>> listOfMaps = new ArrayList<>();
-    while ((readLine = reader.readLine()) != null) {
-      HashMap<String, Row> aMap = getAndParseXmlForUser(readLine);
-      listOfMaps.add(aMap);
-    }
-
-    HashMap<String, Row> combindedMap = listOfMaps.stream().reduce(new HashMap<>(), this::mergeMaps);
-
-    reader.close();
-
-    try {
-      writeCSV(combindedMap);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   private HashMap<String, Row> mergeMaps(HashMap<String, Row> mapA, HashMap<String, Row> mapB) {
     HashMap<String, Row> newMap = new HashMap<>();
     newMap.putAll(mapA);
@@ -144,11 +146,11 @@ public class XMLParser {
     return newMap;
   }
 
-  void writeCSV(HashMap<String, Row> map) {
-    double weightedScore;
-    double scoreCountNormalization;
-    final double FACTOR = 0.9;
+  private void writeCSV(HashMap<String, Row> map) {
     double factorizedScore;
+    double scoreCountNormalization;
+    double weightedScore;    
+    final double FACTOR = 0.866;   
     String link;
 
     System.out.println("Writing File");
@@ -156,8 +158,8 @@ public class XMLParser {
 
     for (Map.Entry<String, Row> entry : map.entrySet()) {
       link = "https://myanimelist.net/anime/" + entry.getKey();
-      scoreCountNormalization = (double) entry.getValue().scoreCount / maxScoreCount;
       factorizedScore = (double) entry.getValue().score * FACTOR;
+      scoreCountNormalization = (double) entry.getValue().scoreCount / maxScoreCount;     
       weightedScore = factorizedScore + scoreCountNormalization * (1.0 - FACTOR) * 10.0;
       result = result + entry.getValue() + "^" + weightedScore + "^" + link + "\n";
     }
