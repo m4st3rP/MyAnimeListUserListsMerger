@@ -3,7 +3,9 @@ Creates a CSV that is a merged anime list of multiple MAL users from a textfile 
 
 Also you need Commons IO: https://commons.apache.org/proper/commons-io/
 
+
 TODO:
+
 Add the option to ignore the completed entries of a specific user.
 
 Add the option to not put out entries with a score count less than 3.
