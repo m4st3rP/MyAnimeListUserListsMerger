@@ -5,6 +5,9 @@ Also you need Commons IO: https://commons.apache.org/proper/commons-io/
 
 TODO:
 Add the option to ignore the completed entries of a specific user.
+
 Add the option to not put out entries with a score count less than 3.
+
 Add the option to put out scores with a decimal comma.
+
 Make it able to simply put Links to MAL profiles into the malusers.txt
