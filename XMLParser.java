@@ -8,6 +8,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -66,15 +67,15 @@ public class XMLParser {
         File xmlFile = new File("animelist", "tmp");
         URL url = new URL(myAnimeListUserURL);
 
-        // sleep is necessary because the MAL API complains at too many requests
-        // skip for first user
-        // if (userCounter != 0) {
-        // try {
-        // TimeUnit.MILLISECONDS.sleep(25);
-        // } catch (InterruptedException e) {
-        // e.printStackTrace();
-        // }
-        // }
+         //sleep is necessary because the MAL API complains at too many requests
+         //skip for first user
+        if (userCounter != 0) {
+            try {
+                TimeUnit.MILLISECONDS.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         userCounter++;
         System.out.println("Processing User #" + userCounter + ": " + user);
         FileUtils.copyURLToFile(url, xmlFile);
