@@ -8,6 +8,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -21,13 +22,15 @@ import org.xml.sax.SAXException;
 
 public class XMLParser {
 
-    private int maxCount = 1;
+    // private int maxCount = 1;
     private int userCounter = 0;
+    private boolean enteredUserToBeIgnored = false;
+    private HashMap<String, Row> mapOfIgnoredEntries;
 
     public static void main(String[] args) {
         XMLParser myInstance = new XMLParser();
         try {
-            myInstance.parseXML();
+            myInstance.getMapOfEnteredUser();
         } catch (IOException | SAXException | ParserConfigurationException e) {
             throw new RuntimeException(e);
         }
@@ -54,12 +57,7 @@ public class XMLParser {
         HashMap<String, Row> combindedMap = listOfMaps.stream().reduce(new HashMap<>(), this::mergeMaps);
 
         reader.close();
-
-        try {
-            writeCSV(combindedMap);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        removeEntriesOfEnteredUser(mapOfIgnoredEntries, combindedMap);
     }
 
     private HashMap<String, Row> getAndParseXmlForUser(String user) throws IOException, ParserConfigurationException, SAXException {
@@ -67,8 +65,8 @@ public class XMLParser {
         File xmlFile = new File("animelist", "tmp");
         URL url = new URL(myAnimeListUserURL);
 
-         //sleep is necessary because the MAL API complains at too many requests
-         //skip for first user
+        // sleep is necessary because the MAL API complains at too many requests
+        // skip for first user
         if (userCounter != 0) {
             try {
                 TimeUnit.MILLISECONDS.sleep(100);
@@ -141,9 +139,6 @@ public class XMLParser {
                     }
                 }
                 newMap.get(entry.getKey()).count += 1;
-                if (newMap.get(entry.getKey()).count > maxCount) {
-                    maxCount = newMap.get(entry.getKey()).count;
-                }
                 // this should be it
             } else { // Key of map 2 is not in the new map, just add the non duplicate
                 newMap.put(entry.getKey(), entry.getValue());
@@ -152,14 +147,51 @@ public class XMLParser {
         return newMap;
     }
 
+    private void getMapOfEnteredUser() throws IOException, ParserConfigurationException, SAXException {
+        System.out.println("Enter username whose entries you want to be ignored or not and then press enter!");
+        Scanner sc = new Scanner(System.in);
+        String ignoreCompletedUser = sc.nextLine();
+        sc.close();
+        if (ignoreCompletedUser != "") {
+            enteredUserToBeIgnored = true;
+            mapOfIgnoredEntries = getAndParseXmlForUser(ignoreCompletedUser);
+        }
+        parseXML();
+    }
+
+    private void removeEntriesOfEnteredUser(HashMap<String, Row> mapOfIgnoredEntries, HashMap<String, Row> combindedMap) {
+        if (enteredUserToBeIgnored) {
+            HashMap<String, Row> newMap = new HashMap<>();
+            newMap.putAll(combindedMap);
+
+            for (Map.Entry<String, Row> entry : mapOfIgnoredEntries.entrySet()) {
+                // if we find the same key in both maps, remove the entry
+                if (newMap.containsKey(entry.getKey())) {
+                    newMap.remove(entry.getKey());
+                }
+            }
+            writeCSV(newMap);
+        } else {
+            writeCSV(combindedMap);
+        }
+    }
+
+
     private void writeCSV(HashMap<String, Row> map) {
         double factorizedScore;
         double scoreCountNormalization;
         double weightedScore;
         final double FACTOR = 0.866;
         String link;
+        int maxCount = 1;
 
-        System.out.println("Writing File");
+        for (Map.Entry<String, Row> entry : map.entrySet()) {
+            if (entry.getValue().count > maxCount) {
+                maxCount = entry.getValue().count;
+            }
+        }
+
+        System.out.println("Writing File...");
         String result = "Name^Score^Count^Score Count^Weighted Score^Link" + "\n";
 
         for (Map.Entry<String, Row> entry : map.entrySet()) {
