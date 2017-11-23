@@ -9,3 +9,7 @@ TODO:
 Add the option to not put out entries with a score count less than x.
 
 Add the option to put out scores with a decimal comma.
+
+Move Weighted Score to directly right of name.
+
+Put out CSV already sorted after WS.
