@@ -25,7 +25,7 @@ public class XMLParser {
 
     private int userCounter = 0;
     private boolean enteredUserToBeIgnored = false;
-    private ArrayList<String> arrayListOfIgnoredEntries;
+    private ArrayList<Integer> arrayListOfIgnoredEntries;
 
     public static void main(String[] args) {
         XMLParser myInstance = new XMLParser();
@@ -37,7 +37,7 @@ public class XMLParser {
     }
 
     private void createIgnoredAnimeList() throws IOException, ParserConfigurationException, SAXException {
-        System.out.println("If you want the completed entries of a user to be excluded enter their name and then press enter:");
+        System.out.println("If you want the completed entries of a user to be excluded enter their name or don't and then press enter:");
         Scanner sc = new Scanner(System.in);
         String ignoreCompletedUser = sc.nextLine();
         sc.close();
@@ -46,31 +46,31 @@ public class XMLParser {
             String myAnimeListUserURL = "https://myanimelist.net/malappinfo.php?u=" + ignoreCompletedUser + "&status=all&type=anime";
             File xmlFile = new File("animelist", "tmp");
             URL url = new URL(myAnimeListUserURL);
-            
+
             System.out.println("Processing entered User: " + ignoreCompletedUser);
             FileUtils.copyURLToFile(url, xmlFile);
-    
+
             // Create the hashmap for this user
-            ArrayList<String> animeList = new ArrayList<String>();
-    
+            ArrayList<Integer> animeList = new ArrayList<Integer>();
+
             // Parse the xml
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(xmlFile);
             doc.getDocumentElement().normalize();
             NodeList nList = doc.getElementsByTagName("anime");
-    
+
             // go through the parsed list and add it to the users list
             for (int i = 0; i < nList.getLength(); i++) {
                 Node nNode = nList.item(i);
-    
+
                 // if its a valid anime node, create a row, extract the data and save it into the user
                 // animelist
                 if (nNode.getNodeType() == Node.ELEMENT_NODE) {
                     Element elem = (Element) nNode;
                     // only add anime if it is completed
                     if (Integer.parseInt(elem.getElementsByTagName("my_status").item(0).getTextContent()) == 2) {
-                        String key = elem.getElementsByTagName("series_animedb_id").item(0).getTextContent();
+                        Integer key = Integer.parseInt(elem.getElementsByTagName("series_animedb_id").item(0).getTextContent());
                         // put the anime into the row
                         animeList.add(key);
                         arrayListOfIgnoredEntries = animeList;
@@ -85,7 +85,7 @@ public class XMLParser {
         String readLine;
         String newReadLine = "";
         BufferedReader reader = new BufferedReader(new FileReader("malusers.txt"));
-        ArrayList<HashMap<String, Row>> listOfMaps = new ArrayList<>();
+        ArrayList<HashMap<Integer, Row>> listOfMaps = new ArrayList<>();
         while ((readLine = reader.readLine()) != null) {
             int lastSlashPosition = readLine.lastIndexOf("/");
             if (lastSlashPosition != -1) {
@@ -95,21 +95,21 @@ public class XMLParser {
                 readLine = newReadLine;
                 newReadLine = "";
             }
-            HashMap<String, Row> aMap = getAndParseXmlForUser(readLine);
+            HashMap<Integer, Row> aMap = getAndParseXmlForUser(readLine);
             listOfMaps.add(aMap);
         }
 
-        HashMap<String, Row> combinedMap = listOfMaps.stream().reduce(new HashMap<>(), this::mergeMaps);
+        HashMap<Integer, Row> combinedMap = listOfMaps.stream().reduce(new HashMap<>(), this::mergeMaps);
 
         reader.close();
         removeEntriesOfEnteredUser(arrayListOfIgnoredEntries, combinedMap);
     }
 
-    private HashMap<String, Row> getAndParseXmlForUser(String user) throws IOException, ParserConfigurationException, SAXException {
+    private HashMap<Integer, Row> getAndParseXmlForUser(String user) throws IOException, ParserConfigurationException, SAXException {
         String myAnimeListUserURL = "https://myanimelist.net/malappinfo.php?u=" + user + "&status=all&type=anime";
         File xmlFile = new File("animelist", "tmp");
         URL url = new URL(myAnimeListUserURL);
-    
+
         // sleep is necessary because the MAL API complains at too many requests
         // skip for first user
         try {
@@ -120,21 +120,21 @@ public class XMLParser {
         userCounter++;
         System.out.println("Processing User #" + userCounter + ": " + user);
         FileUtils.copyURLToFile(url, xmlFile);
-    
+
         // Create the hashmap for this user
-        HashMap<String, Row> animeMap = new HashMap<>();
-    
+        HashMap<Integer, Row> animeMap = new HashMap<>();
+
         // Parse the xml
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
         Document doc = dBuilder.parse(xmlFile);
         doc.getDocumentElement().normalize();
         NodeList nList = doc.getElementsByTagName("anime");
-    
+
         // go through the parsed list and add it to the users list
         for (int i = 0; i < nList.getLength(); i++) {
             Node nNode = nList.item(i);
-    
+
             // if its a valid anime node, create a row, extract the data and save it into the user
             // animelist
             if (nNode.getNodeType() == Node.ELEMENT_NODE) {
@@ -152,8 +152,8 @@ public class XMLParser {
                         row.score = Double.parseDouble(elem.getElementsByTagName("my_score").item(0).getTextContent());
                         row.scoreCount = 1;
                     }
-    
-                    String key = elem.getElementsByTagName("series_animedb_id").item(0).getTextContent();
+
+                    Integer key = Integer.parseInt(elem.getElementsByTagName("series_animedb_id").item(0).getTextContent());
                     // put the anime into the row
                     animeMap.put(key, row);
                 }
@@ -162,15 +162,15 @@ public class XMLParser {
         return animeMap;
     }
 
-    private HashMap<String, Row> mergeMaps(HashMap<String, Row> mapA, HashMap<String, Row> mapB) {
-        HashMap<String, Row> newMap = new HashMap<>();
+    private HashMap<Integer, Row> mergeMaps(HashMap<Integer, Row> mapA, HashMap<Integer, Row> mapB) {
+        HashMap<Integer, Row> newMap = new HashMap<>();
         newMap.putAll(mapA);
-    
-        for (Map.Entry<String, Row> entry : mapB.entrySet()) {
+
+        for (Map.Entry<Integer, Row> entry : mapB.entrySet()) {
             if (newMap.containsKey(entry.getKey())) { // If the key is already in the map, we have a duplicate!
-    
+
                 // We need to update the existing entry
-    
+
                 // Only proceed if the user gave a rating
                 if (entry.getValue().score != 0) {
                     if (newMap.get(entry.getKey()).score > 0) {
@@ -190,14 +190,14 @@ public class XMLParser {
         return newMap;
     }
 
-    private void removeEntriesOfEnteredUser(ArrayList<String> arrayListOfIgnoredEntries, HashMap<String, Row> combinedMap) {
+    private void removeEntriesOfEnteredUser(ArrayList<Integer> arrayListOfIgnoredEntries, HashMap<Integer, Row> combinedMap) {
         if (enteredUserToBeIgnored) {
-            HashMap<String, Row> newMap = new HashMap<>();
+            HashMap<Integer, Row> newMap = new HashMap<>();
             newMap.putAll(combinedMap);
-           
+
             System.out.println("Removing entries");
-            for (Iterator<String> i = arrayListOfIgnoredEntries.iterator(); i.hasNext();) {
-                String t = i.next();
+            for (Iterator<Integer> i = arrayListOfIgnoredEntries.iterator(); i.hasNext();) {
+                Integer t = i.next();
                 // if we find the same key in both maps, remove the entry
                 if (newMap.containsKey(t)) {
                     newMap.remove(t);
@@ -209,31 +209,40 @@ public class XMLParser {
         }
     }
 
-    private void writeCSV(HashMap<String, Row> map) {
+    private void writeCSV(HashMap<Integer, Row> map) {
         double factorizedScore;
         double scoreCountNormalization;
         double weightedScore;
         final double FACTOR = 0.866;
         String link;
         int maxCount = 1;
-    
-        for (Map.Entry<String, Row> entry : map.entrySet()) {
+        int titleAmountWithScore = 0;
+        double totalScore = 0;
+
+        for (Map.Entry<Integer, Row> entry : map.entrySet()) {
             if (entry.getValue().count > maxCount) {
                 maxCount = entry.getValue().count;
             }
+            if (entry.getValue().score > 0) {
+                titleAmountWithScore++;
+            }
+            totalScore += entry.getValue().score;
         }
-    
+
         System.out.println("Writing File");
         String result = "Name^Score^Count^Score Count^Weighted Score^Link" + "\n";
-    
-        for (Map.Entry<String, Row> entry : map.entrySet()) {
+
+        for (Map.Entry<Integer, Row> entry : map.entrySet()) {
             link = "https://myanimelist.net/anime/" + entry.getKey();
             factorizedScore = (double) entry.getValue().score * FACTOR;
             scoreCountNormalization = (double) entry.getValue().count / maxCount;
             weightedScore = factorizedScore + scoreCountNormalization * (1.0 - FACTOR) * 10.0;
             result = result + entry.getValue() + "^" + weightedScore + "^" + link + "\n";
         }
-    
+
+        System.out.println("Max count: " + maxCount);
+        System.out.println("Average rating: " + totalScore / titleAmountWithScore);
+
         try {
             FileUtils.writeStringToFile(new File("MergedLists.txt"), result, "UTF-8");
             System.out.println("Finished!");
