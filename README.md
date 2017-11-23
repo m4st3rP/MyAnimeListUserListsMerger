@@ -6,8 +6,6 @@ Also you need Commons IO: https://commons.apache.org/proper/commons-io/
 
 TODO:
 
-Change ignored entries of a specific user to only be the completed ones.
-
-Add the option to not put out entries with a score count less than 3.
+Add the option to not put out entries with a score count less than x.
 
 Add the option to put out scores with a decimal comma.
