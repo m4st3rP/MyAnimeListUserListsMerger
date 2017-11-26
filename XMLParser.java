@@ -113,7 +113,7 @@ public class XMLParser {
         // sleep is necessary because the MAL API complains at too many requests
         // skip for first user
         try {
-            TimeUnit.MILLISECONDS.sleep(100);
+            TimeUnit.MILLISECONDS.sleep(150);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -207,7 +207,7 @@ public class XMLParser {
         } else {
             writeCSV(combinedMap);
         }
-    }
+}
 
     private void writeCSV(HashMap<Integer, Row> map) {
         double factorizedScore;
