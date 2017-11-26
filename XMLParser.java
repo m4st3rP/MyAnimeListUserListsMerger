@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
@@ -196,11 +195,10 @@ public class XMLParser {
             newMap.putAll(combinedMap);
 
             System.out.println("Removing entries");
-            for (Iterator<Integer> i = arrayListOfIgnoredEntries.iterator(); i.hasNext();) {
-                Integer t = i.next();
+            for (Integer elem : arrayListOfIgnoredEntries) {
                 // if we find the same key in both maps, remove the entry
-                if (newMap.containsKey(t)) {
-                    newMap.remove(t);
+                if (newMap.containsKey(elem)) {
+                    newMap.remove(elem);
                 }
             }
             writeCSV(newMap);
