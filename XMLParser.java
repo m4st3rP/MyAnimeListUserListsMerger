@@ -25,6 +25,7 @@ public class XMLParser {
     private int userCounter = 0;
     private boolean enteredUserToBeIgnored = false;
     private ArrayList<Integer> arrayListOfIgnoredEntries;
+    private int sleepTime = 200;
 
     public static void main(String[] args) {
         XMLParser myInstance = new XMLParser();
@@ -36,9 +37,12 @@ public class XMLParser {
     }
 
     private void createIgnoredAnimeList() throws IOException, ParserConfigurationException, SAXException {
-        System.out.println("If you want the completed entries of a user to be excluded enter their name or don't and then press enter:");
         Scanner sc = new Scanner(System.in);
+        System.out.println("If you want the completed entries of a user to be excluded enter their name or don't and then press enter:");
         String ignoreCompletedUser = sc.nextLine();
+        System.out.println("Enter amount of waiting in miliseconds between each user. Standard is 200. Increase if you are getting 429 errors (500ms should be enough), decrease if you think you are lucky.");
+        sleepTime = sc.nextInt();
+        if (sleepTime < 0) sleepTime = 200;
         sc.close();
         if (ignoreCompletedUser.length() > 0) {
             enteredUserToBeIgnored = true;
@@ -112,7 +116,7 @@ public class XMLParser {
         // sleep is necessary because the MAL API complains at too many requests
         // skip for first user
         try {
-            TimeUnit.MILLISECONDS.sleep(150);
+            TimeUnit.MILLISECONDS.sleep(sleepTime);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
