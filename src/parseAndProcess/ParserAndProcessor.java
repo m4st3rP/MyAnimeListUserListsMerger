@@ -1,4 +1,4 @@
-package xmlparser;
+package parseAndProcess;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -20,7 +20,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-public class XMLParser {
+public class ParserAndProcessor {
 
     private int userCounter = 0;
     private boolean enteredUserToBeIgnored = false;
@@ -28,7 +28,7 @@ public class XMLParser {
     private int sleepTime = 200;
 
     public static void main(String[] args) {
-        XMLParser myInstance = new XMLParser();
+        ParserAndProcessor myInstance = new ParserAndProcessor();
         try {
             myInstance.createIgnoredAnimeList();
         } catch (IOException | SAXException | ParserConfigurationException e) {

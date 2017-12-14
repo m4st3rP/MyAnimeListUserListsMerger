@@ -1,4 +1,4 @@
-package xmlparser;
+package parseAndProcess;
 
 public class Row {
   public String name;
