@@ -1,0 +1,11 @@
+animelist/
+MergedLists.txt
+
+# IntelliJ
+*.iml
+.idea/
+out/
+
+# Gradle
+build/
+.gradle/
