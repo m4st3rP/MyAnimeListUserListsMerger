@@ -9,3 +9,5 @@ After that I start the program, paste them into the users text area, enter my MA
 Now I wait until it's finished, import the txt file into Excel, use ^ as cell seperator and also set that it's a UTF-8 file.
 Optionally I first sort after score count and move every anime with a score count less than 3 to an extra table.
 Then I sort them after weighted score.
+
+Old Bitbucket Repo: https://bitbucket.org/meesterP_/myanimelistuserlistsmerger/src/master/
